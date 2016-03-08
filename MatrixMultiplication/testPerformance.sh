@@ -6,15 +6,14 @@ g++ MatrixMultiplication.c -o run -fno-tree-vectorize
 # grep (extracts all numbers from the input)
 # head (head returns first line of the input)
 # Do that for 15 values and append to the file result.txt
-output=result.txt
+output=performanceResult.txt
 
-# clean result
-rm $output 2>/dev/null
+rm $output 2>/dev/null  # remove output if it exists
+
 for i in {1..15}
 do
 	./run 100*i | grep -Eo '[0-9]+\.[0-9]*' | head -1 >> $output
 done
-# Extract and output measured cycles
 
 
 
