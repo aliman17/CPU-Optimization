@@ -26,12 +26,10 @@ double *U, *V, *X, *Y, *Z;
 	Initialize the input
 ******/
 
-void init_mat(double * m){
-  unsigned short int i,j;
+void init_array(double * m){
+  unsigned short int i;
   for(i =0; i<n;i++) {
-	for(j=0; j<n;j++){
-		m[n*i+j] = (double)i/(j+1) + 1.0;
-	}
+	m[i] = (double)rand();
   }
 }
 
@@ -236,6 +234,12 @@ int main(int argc, char **argv){
   Y = (double *)calloc(n,sizeof(double));
   Z = (double *)calloc(n,sizeof(double));
   
+  init_array(U);
+  init_array(V);
+  init_array(X);
+  init_array(Y);
+  init_array(Z);
+
   r = rdtsc();
   printf("RDTSC instruction:\n %lf cycles measured => %lf seconds, assuming frequency is %lf MHz. (change in source file if different)\n\n", r, r/(FREQUENCY), (FREQUENCY)/1e6);
    
