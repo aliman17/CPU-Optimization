@@ -299,9 +299,12 @@ int benchmark(){
 		number = number << 1; // multiply by 2
 	}
 	// print medians of cycles to stdout
+	FILE * f = fopen("benchmarkResultCycles.txt", "w");
 	for (i = 0; i < 18; i++) {
 		printf("%f\n", medians[i]);
+		fprintf(f, "%f\n", medians[i]);
 	}
+	fclose(f);
 	return 0;
 }
 
