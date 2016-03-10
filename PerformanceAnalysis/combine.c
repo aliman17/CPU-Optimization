@@ -19,7 +19,7 @@
 #define FREQUENCY 2.6e9 	// change from 3.4 to 2.6 for my computer
 #define CALIBRATE
 
-unsigned short int n;
+unsigned int n;
 double *U, *V, *X, *Y, *Z;
 
 /******
@@ -27,7 +27,7 @@ double *U, *V, *X, *Y, *Z;
 ******/
 
 void init_array(double * m){
-  unsigned short int i;
+  unsigned int i;
   for(i =0; i<n;i++) {
 	m[i] = (double)rand();
   }
@@ -38,8 +38,6 @@ void init_array(double * m){
  * Straightforward implementation of Array Combine
  * 
  */
-
-
 void compute(){
 	int i;
 	for (i = 0; i < n; i++){
@@ -215,7 +213,7 @@ double queryperfcounter(LARGE_INTEGER f) {
 
 #endif
 
-int main(int argc, char **argv){
+double * main_run(int n_input){
 
   int i;
   double r;
@@ -225,8 +223,7 @@ int main(int argc, char **argv){
   LARGE_INTEGER f;
 #endif
   double p;
-  if (argc!=2) {printf("usage: FW <n>\n"); return -1;}
-  n = atoi(argv[1]);
+  n = n_input;
   printf("n=%d \n",n);
   U = (double *)calloc(n,sizeof(double));
   V = (double *)calloc(n,sizeof(double));
@@ -261,8 +258,61 @@ int main(int argc, char **argv){
   printf("Windows QueryPerformanceCounter() function:\n %lf cycles measured => %lf seconds, with reported CPU frequency %lf MHz\n\n",p,p/f.QuadPart,(double)f.QuadPart/1000);
 #endif
 
-  
-  return 0;
+	double * result = (double*)malloc(4*sizeof(double));	
+  result[0] = r;
+  result[1] = c;
+  result[2] = t;
+  result[3] = p;
+  return result;
 }
 
 
+/* Helper function for qsort */
+int compare(const void *a, const void *b){
+	return (*(int*)a - *(int*)b);
+}
+
+/* Generate n=2^4, n=2^5, ... n=2^22. For each number n
+ * run the case 30 times and take the median number of
+ * cycles that are computed. Result id 18 numbers, which
+ * are medians of 18 different input number n. */
+int benchmark(){
+	int i;
+	int j;
+	int samplesNum = 30;	// number of samples to repeat
+	double samples[samplesNum];// storage for samples
+	double * result;	// tmp result of a sample
+	unsigned int number = 16;	// starting number for a sample
+	double medians[18];	// medians across the samples, each 30 samples go into one median value here
+	// start inserting different numbers
+	for (i = 0; i<18; i++){
+		// run 30 samples
+		for (j = 0; j < samplesNum; j++){
+			// result = {cycles, gettimeoffday, gettickcount, queryperfcounter}
+			result = main_run(number);
+			samples[j] = result[0]; // store cycles
+		}	
+		// Sort the cycle values from 30 samples
+		qsort(samples, samplesNum, sizeof(double), compare);
+		// Take the median of 30 samples
+		medians[i] = samples[samplesNum/2];
+		number = number << 1; // multiply by 2
+	}
+	// print medians of cycles to stdout
+	for (i = 0; i < 18; i++) {
+		printf("%f\n", medians[i]);
+	}
+	return 0;
+}
+
+
+int main(int argc, char **argv){
+  // if no arguments, run benchmark	
+  if (argc!=2) {benchmark();}
+  // if arguments, run that specific case with a given n
+  else {
+    n = atoi(argv[1]);
+    main_run(n);
+    return 0;
+  }
+}
