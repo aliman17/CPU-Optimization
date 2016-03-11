@@ -1,6 +1,6 @@
 #!/bin/bash
 # Compile matrix multiplication
-g++ MatrixMultiplication.c -o run -fno-tree-vectorize
+g++ MatrixMultiplication.c -o run -fno-tree-vectorize -mno-abm
 
 # Run Matrix multiplication, extract measured cycles with
 # grep (extracts all numbers from the input)
@@ -12,8 +12,8 @@ rm $output 2>/dev/null  # remove output if it exists
 
 for i in {1..15}
 do
-	./run 100*i | grep -Eo '[0-9]+\.[0-9]*' | head -1 >> $output
+	./run $((100*i)) | grep -Eo '[0-9]+\.[0-9]*' | head -1 >> $output
 done
 
-
+cat $output
 
