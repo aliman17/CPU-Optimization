@@ -1,0 +1,7 @@
+pow=16
+echo > print_flops.txt
+for i in {1..18}
+do
+	echo $(($pow*2.5)) >> print_flops.txt
+	pow=$(($pow*2))
+done
