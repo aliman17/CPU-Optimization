@@ -1,0 +1,4 @@
+Cycle per issue
+0.5325491
+Procentage
+0.938880565191
