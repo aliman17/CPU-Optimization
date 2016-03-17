@@ -21,18 +21,38 @@
 
 unsigned int n;
 double *U, *V, *X, *Y, *Z;
-int sum;
+double sum = 0;
+double mul = 1;
+double num = 0.9;
 /* 
- * Straightforward implementation of Array Combine
- * 
+My implementation of example code to perform high performance
  */
 void compute(){
-	
-	int i;
+	mul = 1;
 	sum = 0;
-	for (i = 0; i < n; i++){
-		sum += 2*i*(i-1); 
+	
+	// Use K accumulators, in our case 4
+	double acc1 = 0;
+	double acc2 = 0;
+
+	double acc5 = 1;
+	double acc6 = 1;
+
+	double tmp = 1.1;
+	int i;
+	for (i = 0; i < n-4; i+=4){
+		acc1 += tmp + tmp;
+		acc2 += tmp + tmp;
+
+		acc5 *= tmp * tmp;
+		acc6 *= tmp * tmp;
 	}
+	for (; i<n; i++){
+		sum += tmp;
+		mul *= tmp;
+	}
+	sum += acc1 + acc2;
+	mul *= acc5 * acc6;
 }
 
 /* 
@@ -217,24 +237,24 @@ double * main_run(int n_input){
   printf("n=%d \n",n);
 
   r = rdtsc();
-  printf("RDTSC instruction:\n %lf cycles measured => %lf seconds, assuming frequency is %lf MHz. (change in source file if different)\n\n", r, r/(FREQUENCY), (FREQUENCY)/1e6);
+  //printf("RDTSC instruction:\n %lf cycles measured => %lf seconds, assuming frequency is %lf MHz. (change in source file if different)\n\n", r, r/(FREQUENCY), (FREQUENCY)/1e6);
    
  
   c = c_clock();
-  printf("C clock() function:\n %lf cycles measured. On some systems, this number seems to be actually computed from a timer in seconds then transformed into clock ticks using the variable CLOCKS_PER_SEC. Unfortunately, it appears that CLOCKS_PER_SEC is sometimes set improperly. (According to this variable, your computer should be running at %lf MHz). In any case, dividing by this value should give a correct timing: %lf seconds. \n\n",c, (double) CLOCKS_PER_SEC/1e6, c/CLOCKS_PER_SEC);
+  //printf("C clock() function:\n %lf cycles measured. On some systems, this number seems to be actually computed from a timer in seconds then transformed into clock ticks using the variable CLOCKS_PER_SEC. Unfortunately, it appears that CLOCKS_PER_SEC is sometimes set improperly. (According to this variable, your computer should be running at %lf MHz). In any case, dividing by this value should give a correct timing: %lf seconds. \n\n",c, (double) CLOCKS_PER_SEC/1e6, c/CLOCKS_PER_SEC);
 
   
 #ifndef WIN32
   t = timeofday();
-  printf("C gettimeofday() function:\n %lf seconds measured\n\n",t);
+  //printf("C gettimeofday() function:\n %lf seconds measured\n\n",t);
 #else
   t = gettickcount();
-  printf("Windows getTickCount() function:\n %lf milliseconds measured\n\n",t);
+  //printf("Windows getTickCount() function:\n %lf milliseconds measured\n\n",t);
 
   QueryPerformanceFrequency((LARGE_INTEGER *)&f);
 
   p = queryperfcounter(f);
-  printf("Windows QueryPerformanceCounter() function:\n %lf cycles measured => %lf seconds, with reported CPU frequency %lf MHz\n\n",p,p/f.QuadPart,(double)f.QuadPart/1000);
+  //printf("Windows QueryPerformanceCounter() function:\n %lf cycles measured => %lf seconds, with reported CPU frequency %lf MHz\n\n",p,p/f.QuadPart,(double)f.QuadPart/1000);
 #endif
 
 	double * result = (double*)malloc(4*sizeof(double));	
@@ -258,16 +278,17 @@ int compare(const void *a, const void *b){
 int benchmark(){
 	int i;
 	int j;
-	int samplesNum = 10;	// number of samples to repeat
+	int samplesNum = 5;	// number of samples to repeat
 	double samples[samplesNum];// storage for samples
 	double * result;	// tmp result of a sample
-	unsigned int number = 16;	// starting number for a sample
+	unsigned int number = 15000000;	// starting number for a sample
 	double medians[18];	// medians across the samples, each 30 samples go into one median value here
 	// start inserting different numbers
-
+	
 	FILE * f_y = fopen("num_of_cycles.txt", "w");
 	FILE * f_x = fopen("n.txt", "w");
-	for (i = 0; i<18; i++){
+	for (i = 0; i<1; i++){
+		
 		// run 30 samples
 		for (j = 0; j < samplesNum; j++){
 			// result = {cycles, gettimeoffday, gettickcount, queryperfcounter}
@@ -277,7 +298,7 @@ int benchmark(){
 		// Sort the cycle values from 30 samples
 		qsort(samples, samplesNum, sizeof(double), compare);
 		// Take the median of 30 samples
-		medians[i] = samples[samplesNum/2];
+		medians[i] = samples[0];
 
 		// store result into files
 		fprintf(f_y, "%f\n", medians[i]);
