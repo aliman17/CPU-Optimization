@@ -86,7 +86,7 @@ void fast_filter3(vector_t *dst, vector_t *src, double *h){
 			// base m
 			tmp_ym = tmp_ym + tmp_hj*tmp_xmj + tmp_hj1*x[m-j-1];
 			// parallel m+1			
-			tmp_ym1 = tmp_ym1 + tmp_hj*x[m+1-j] + tmp_hj1*tmp_xmj;
+			tmp_ym1 = tmp_ym1 + tmp_hj*x[m+1-j] + tmp_hj1*tmp_xmj; 
 		}
 		tmp_j = j;	// copy j that we can use it in the next loop for m+1
 		// finish loop for j while having m
