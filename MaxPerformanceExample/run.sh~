@@ -1,4 +1,7 @@
 #/bin/bash
-g++ combine.c -o combine -fno-tree-vectorize -mno-abm
+gcc -S combine.c  # assembley
+g++ combine.c -O0 -o combine -fno-tree-vectorize -mno-abm
+./combine
 
-
+python ./performanceResults.py > performanceResults.txt
+cat performanceResults.txt
