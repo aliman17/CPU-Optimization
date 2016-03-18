@@ -49,6 +49,91 @@ long int compute_flops(int n){
 //write your optimized code here
 
 /*
+	Higher unrolling factor
+*/
+void fast_filter4(vector_t *dst, vector_t *src, double *h){
+	double * y = dst->v;
+	double * x = src->v;
+	int n = src->n;
+	int m,j;
+	// initialize
+	for(m=0; m < n-1; m+=2){
+		y[m] = 0;
+		y[m+1] = 0;
+	}
+	y[n-1] = 0;
+
+	// set new limits for inner loop
+	int limit1 = FILTER_SIZE-3;
+	int limit2 = 3;
+
+	double tmp_ym;		// variable for y[m]
+	double tmp_ym1;		// variable for y[m+1]
+	//double tmp_ym2;		// variable for y[m+2]
+	//double tmp_ym3;		// variable for y[m+3]
+	double tmp_xmj;		// variable for x[m-j]
+	double tmp_xmj1;	// variable for x[m-j-1]
+	double tmp_xmj2;	// variable for x[m-j-2]
+	double tmp_xmj3;	// variable for x[m-j-3]
+	double tmp_hj;		// variable for h[j]
+	double tmp_hj1;		// variable for h[j+1]
+	double tmp_hj2;		// variable for h[j+2]
+	double tmp_hj3;		// variable for h[j+3]
+	int tmp_j;		// variable to copy j
+
+	for(m=0; m < n-1; m+=2){
+
+		tmp_ym = y[m];
+		tmp_ym1 = y[m+1];
+		//tmp_ym2 = y[m+2];
+		//tmp_ym3 = y[m+3];
+
+		for(j=0; j < limit1 && (m-j)>=limit2; j+=4){
+			tmp_xmj = x[m-j];
+			tmp_xmj1 = x[m-j-1];
+			tmp_xmj2 = x[m-j-2];
+			tmp_xmj3 = x[m-j-3];
+			tmp_hj = h[j];
+			tmp_hj1 = h[j+1];
+			tmp_hj2 = h[j+2];
+			tmp_hj3 = h[j+3];
+			// base m
+			tmp_ym = tmp_ym + tmp_hj*tmp_xmj + tmp_hj1*tmp_xmj1 + tmp_hj2*tmp_xmj2 + tmp_hj3*tmp_xmj3;
+			// parallel m+1			
+			tmp_ym1 = tmp_ym1 + tmp_hj*x[m+1-j] + tmp_hj1*tmp_xmj + tmp_hj2*tmp_xmj1 + tmp_hj3*tmp_xmj2;
+			
+		}
+		tmp_j = j;	// copy j that we can use it in the next loop for m+1
+		// finish loop for j while having m
+		for (; j < FILTER_SIZE && (m-j)>=0; j++){
+			tmp_ym = tmp_ym + h[j]*x[m-j];
+		}
+		// finish loop for j while having m+1 (parallel)
+		for (j = tmp_j; j < FILTER_SIZE && (m+1-j)>=0; j++){
+			tmp_ym1 = tmp_ym1 + h[j]*x[m+1-j];
+		}
+		// store both results into memory
+		y[m] = tmp_ym;
+		y[m+1] = tmp_ym1; 	
+	}
+	// finish m: there will be one or zero iterations of this loop
+	for(; m < n; m++){
+
+		tmp_ym = y[m];
+
+		// do parallel for j again
+		for(j=0; j < limit1 && (m-j)>=limit2; j+=2){
+			tmp_ym = tmp_ym + h[j]*x[m-j] + h[j+1]*x[m-j-1];
+		}
+		// finish j if something left
+		for (; j < FILTER_SIZE && (m-j)>=0; j++){
+			tmp_ym = tmp_ym + h[j]*x[m-j];
+		}
+		y[m] = tmp_ym;	
+	}
+}
+
+/*
 	Unroll both loops
 */
 void fast_filter3(vector_t *dst, vector_t *src, double *h){
@@ -213,6 +298,7 @@ void register_functions()
 	//add_function(&slow_filter, "fast_filter: optimized version 1");
 
 	// Add your functions here
+	add_function(&fast_filter4, "fast_filter: Optimization 4 (Unroll both loops + unroll factor 4)");
 	add_function(&fast_filter3, "fast_filter: Optimization 3 (Unroll both loops)");
 	add_function(&fast_filter2, "fast_filter: Optimization 2 (Unroll outer loop)");
 	add_function(&fast_filter1, "fast_filter: Optimization 1 (Unroll inner loop)");
